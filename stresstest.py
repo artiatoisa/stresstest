@@ -77,7 +77,7 @@ class TestMem(AbstractTest):
     def __init__(self, size=None, chunk=None):
         self.chunk = chunk or 1024 * 1024 * 100
         self.size = size or '100%'
-        self.measurement = {'GB': 1_073_741_824, 'MB': 1_048_576, 'KB': 1_024}
+        self.measurement = {'GB': 1073741824, 'MB': 1048576, 'KB': 1024}
         self.meminfo = TestMem._detect_memory()
         self.bytes = self._size_to_bytes()
         self.list_obj = []
