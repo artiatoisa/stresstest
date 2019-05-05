@@ -1,11 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from multiprocessing import cpu_count, Pool, TimeoutError
-from time import sleep, strftime, gmtime, time, clock
+from time import sleep, strftime, gmtime, clock
 import signal
 from functools import partial
 import re
 import os
-import sys
+import argparse
 
 
 class TestError(Exception):
@@ -47,6 +47,12 @@ class TestCPU(AbstractTest):
     def __init__(self, cpu_core=None, cpu_util=None):
         self.cpu_core = cpu_core or cpu_count()
         self.cpu_util = cpu_util or 100
+
+    def __str__(self):
+        return 'TestCPU'
+
+    def __repr__(self):
+        return 'TestCPU'
 
     @staticmethod
     def _init_worker():
@@ -165,7 +171,7 @@ class WriteTestHDD(AbstractTest):
         pass
 
 
-class StressTest:
+class StressTest(object):
 
     def __init__(self, test_time, test_type=None):
         self.test_time = test_time
@@ -176,9 +182,23 @@ class StressTest:
     def run_test(self):
         return self.test_type.run_test(self.test_time)
 
+
 def _main():
-    test_type = StressTest(test_time=5)
+    parser = argparse.ArgumentParser(description='Script for simulate system load.')
+    parser.add_argument('--type', choices=('memory', 'cpu'), required=True, help='Type of generate load.')
+    parser.add_argument('--time', type=int, required=True, help='How long load.')
+    parser.add_argument('--cpu-count', type=int, help='How long load.')
+    parser.add_argument('--cpu-util', type=int, help='How long load.')
+    parser.add_argument('--mem-size', type=str, help='How long load.')
+    args = parser.parse_args()
+    test = None
+    if args.type == 'memory':
+        test = StressTest(test_time=args.time, test_type=TestMem(size=args.mem_size))
+    if args.type == 'cpu':
+        test = StressTest(test_time=args.time, test_type=TestCPU(cpu_core=args.cpu_count, cpu_util=args.cpu_util))
+    if test:
+        test.run_test()
 
 
-# if __name__ == '__main__':
-#     _main()
+if __name__ == '__main__':
+    _main()
