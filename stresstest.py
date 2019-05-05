@@ -99,7 +99,7 @@ class TestMem(AbstractTest):
         mem = None
         try:
             with open('/proc/meminfo') as f:
-                mem = {l.split(':')[0]: int((re.sub('\D', '', l)), re.sub('.*\d ', '', l[:-1]).upper()) for l in f.readlines()}
+                mem = {l.split(':')[0]: (int(re.sub('\D', '', l)), re.sub('.*\d ', '', l[:-1]).upper()) for l in f.readlines()}
         except IOError:
             print('File /proc/meminfo not found.\nYou can\'t use percentage.')
         return mem
@@ -123,7 +123,7 @@ class TestMem(AbstractTest):
         else:
             yield self.bytes
 
-    def run_test(self, time):
+    def run_test(self, timeout):
         if self.bytes:
             for chunk in self._get_chunk():
                 try:
@@ -136,14 +136,14 @@ class TestMem(AbstractTest):
                 else:
                     print('Load {}/{}.'.format(chunk, self.bytes))
                     sleep(2)
-            print(strftime("Test load. Waiting for %Hh:%Mm:%Ss", gmtime(time)))
+            print(strftime("Test load. Waiting for %Hh:%Mm:%Ss", gmtime(timeout)))
             try:
-                sleep(time)
+                sleep(timeout)
             except KeyboardInterrupt:
-                self.list_obj.clear()
+                del self.list_obj[:]
                 return 'Test finish.'
             else:
-                self.list_obj.clear()
+                del self.list_obj[:]
                 return 'Test finish.'
 
 
@@ -161,7 +161,7 @@ class WriteTestHDD(AbstractTest):
         stats = os.statvfs(self.mount)
         return stats.f_frsize * stats.f_bavail / 1024 / 1024
 
-    def run_test(self, time):
+    def run_test(self, timeout):
         pass
 
 
