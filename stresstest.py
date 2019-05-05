@@ -1,10 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from multiprocessing import cpu_count, Pool, TimeoutError
 from time import sleep, strftime, gmtime, time
-from signal import signal, SIG_IGN, SIGINT
+import signal
 from functools import partial
 import re
 import os
+import sys
 
 
 class TestError(Exception):
@@ -32,6 +33,11 @@ class AbstractTest(object):
         pass
 
 
+def unwrap_func(*args, **kwargs):
+    TestCPU._f(*args, **kwargs)
+
+
+
 class TestCPU(AbstractTest):
     """
     Test for load CPU. It can load by CPU count.
@@ -43,29 +49,28 @@ class TestCPU(AbstractTest):
         self.cpu_util = cpu_util or 100
 
     @staticmethod
-    def init_worker():
-        signal(SIGINT, SIG_IGN)
+    def _init_worker():
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     @staticmethod
-    def _f(x, timeout):
-        time_end = time() + timeout
-        while time_end >= time():
-            try:
-                x * x
-            except KeyboardInterrupt:
-                break
+    def _f(x):
+        while True:
+            sleep(0.0000002)
+            x * x
 
     def run_test(self, timeout):
-        pool = Pool(self.cpu_core, TestCPU.init_worker)
+        pool = Pool(self.cpu_core, initializer=TestCPU._init_worker)
         try:
-            result = pool.map(partial(TestCPU._f, timeout=timeout), range(self.cpu_core))
+            result = pool.map_async(unwrap_func, range(self.cpu_core))
+            # result = pool.map_async(partial(unwrap_func, timeout=timeout), range(self.cpu_core))
+            result.get(timeout)
         except KeyboardInterrupt:
             pool.terminate()
-            pool.join()
             print('Test finish by ^C')
-        else:
+        except TimeoutError:
+            pool.terminate()
             print('Test finish by timeout.')
-            pool.close()
+        finally:
             pool.join()
 
 
