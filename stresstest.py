@@ -55,7 +55,7 @@ class TestCPU(AbstractTest):
     @staticmethod
     def _f(x):
         while True:
-            sleep(0.0000002)
+            sleep(0.000005)
             x * x
 
     def run_test(self, timeout):
