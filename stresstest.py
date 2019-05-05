@@ -99,7 +99,7 @@ class TestMem(AbstractTest):
         mem = None
         try:
             with open('/proc/meminfo') as f:
-                mem = {l.split(':')[0]: (re.sub('\D', '', l), re.sub('.*\d ', '', l[:-1]).upper()) for l in f.readlines()}
+                mem = {l.split(':')[0]: int((re.sub('\D', '', l)), re.sub('.*\d ', '', l[:-1]).upper()) for l in f.readlines()}
         except IOError:
             print('File /proc/meminfo not found.\nYou can\'t use percentage.')
         return mem
