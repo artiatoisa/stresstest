@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from multiprocessing import cpu_count, Pool, TimeoutError
-from time import sleep, strftime, gmtime, time
+from time import sleep, strftime, gmtime, time, clock
 import signal
 from functools import partial
 import re
@@ -53,16 +53,23 @@ class TestCPU(AbstractTest):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     @staticmethod
-    def _f(x):
+    def _f(x, load):
+        time_of_run = 0.1
+        percent_cpu = load
+        cpu_time_utilisation = float(percent_cpu) / 100
+        on_time = time_of_run * cpu_time_utilisation
+        off_time = time_of_run * (1 - cpu_time_utilisation)
         while True:
-            sleep(0.000005)
-            x * x
+            start_time = clock()
+            while clock() - start_time < on_time:
+                x * x
+            sleep(off_time)
 
     def run_test(self, timeout):
         pool = Pool(self.cpu_core, initializer=TestCPU._init_worker)
         try:
-            result = pool.map_async(unwrap_func, range(self.cpu_core))
-            # result = pool.map_async(partial(unwrap_func, timeout=timeout), range(self.cpu_core))
+            # result = pool.map_async(unwrap_func, range(self.cpu_core))
+            result = pool.map_async(partial(unwrap_func, load=self.cpu_util), range(self.cpu_core))
             result.get(timeout)
         except KeyboardInterrupt:
             pool.terminate()
