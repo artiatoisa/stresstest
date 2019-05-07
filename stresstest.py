@@ -1,11 +1,12 @@
 from abc import ABCMeta, abstractmethod
 from multiprocessing import cpu_count, Pool, TimeoutError
-from time import sleep, strftime, gmtime, clock
+from time import sleep, strftime, gmtime, clock, time
 import signal
 from functools import partial
 import re
 import os
 import argparse
+import subprocess
 
 
 class TestError(Exception):
@@ -17,7 +18,7 @@ class TestError(Exception):
 
 class TestTypeError(TestError):
     """
-    Class for Exception by not set type og test.
+    Class for Exception by not set type of test.
     """
     pass
 
@@ -158,17 +159,36 @@ class WriteTestHDD(AbstractTest):
     Test for load disc. It use dd with flag direct to write without FS caches.
     It write file of 1 GB by defaultsx by loop for set time.
     """
-    def __init__(self, mount, file_size=1024):
-        self.mount = mount
-        self.file_size = file_size
+    def __init__(self, mount=None, bs=None, count=None):
+        self.measurement = {'GB': 1073741824, 'MB': 1048576, 'KB': 1024}
+        self.mount = mount or '.'
+        self.bs = self._size_to_bytes(bs) or self._size_to_bytes('1G')
+        self.count = count or 1
         self.free_space = self._get_free_space()
 
     def _get_free_space(self):
         stats = os.statvfs(self.mount)
         return stats.f_frsize * stats.f_bavail / 1024 / 1024
 
+    def _size_to_bytes(self, size):
+        measurement = re.sub('\d', '', size).upper()
+        amount = int(re.sub('\D', '', size))
+        MMB = {'G': 'GB', 'M': 'MB', 'K': 'KB'}
+        return amount * self.measurement[MMB.get(measurement, measurement)]
+
     def run_test(self, timeout):
-        pass
+        if self.free_space < self.bs * self.count:
+            raise TestError('Not enough free space on {}'.format(self.mount))
+        if os.path.exists('{}/test.img'.format(self.mount)):
+            raise TestError('File {} exist.'.format(self.mount))
+        cmd_list = ['dd', 'if=/dev/zero', 'of={}/test.img'.format(self.mount),
+                    'bs={}'.format(self.bs), 'count={}'.format(self.count)]
+        time_finish = time() + timeout
+        while time_finish > time():
+            a = subprocess.Popen(cmd_list)
+            a.communicate()
+            os.remove('{}/test.img'.format(self.mount))
+        return 'Test finish.'
 
 
 class StressTest(object):
@@ -185,17 +205,24 @@ class StressTest(object):
 
 def _main():
     parser = argparse.ArgumentParser(description='Script for simulate system load.')
-    parser.add_argument('--type', choices=('memory', 'cpu'), required=True, help='Type of generate load.')
+    parser.add_argument('--type', choices=('memory', 'cpu', 'hdd'), required=True, help='Type of generate load.')
     parser.add_argument('--time', type=int, required=True, help='How long load.')
-    parser.add_argument('--cpu-count', type=int, help='How long load.')
-    parser.add_argument('--cpu-util', type=int, help='How long load.')
-    parser.add_argument('--mem-size', type=str, help='How long load.')
+    parser.add_argument('--cpu-count', type=int, help='How much core to use. By default is all.')
+    parser.add_argument('--cpu-util', type=int, help='How much load to generate. By default is 100%')
+    parser.add_argument('--mem-size', type=str, help='Size of memory to load.')
+    parser.add_argument('--mem-chunk', type=int, help='Size of chunk in bytes. By default chunk is 100MiB.')
+    parser.add_argument('--hdd-mount', type=str, help='Mount to write. By default is near the script.')
+    parser.add_argument('--hdd-bs', type=str, help='Write up to BYTES bytes at a time. By default is 1GiB.')
+    parser.add_argument('--hdd-count', type=int, help='Size of chunk in bytes. By default chunk is 100MiB.')
     args = parser.parse_args()
     test = None
     if args.type == 'memory':
         test = StressTest(test_time=args.time, test_type=TestMem(size=args.mem_size))
     if args.type == 'cpu':
         test = StressTest(test_time=args.time, test_type=TestCPU(cpu_core=args.cpu_count, cpu_util=args.cpu_util))
+    if args.type == 'hdd':
+        test = StressTest(test_time=args.time, test_type=WriteTestHDD(mount=args.hdd_mount, bs=args.hdd_bs,
+                                                                      count=args.hdd_count))
     if test:
         test.run_test()
 
