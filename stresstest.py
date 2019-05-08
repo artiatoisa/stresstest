@@ -187,9 +187,14 @@ class WriteTestHDD(AbstractTest):
                     'bs={}'.format(self.bs), 'count={}'.format(self.count), 'oflag=direct', 'conv=fdatasync']
         time_finish = time() + timeout
         while time_finish > time():
-            a = subprocess.Popen(cmd_list)
-            a.communicate()
-            os.remove('{}/test.img'.format(self.mount))
+            try:
+                a = subprocess.Popen(cmd_list, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = a.communicate()
+                print(out)
+            except KeyboardInterrupt:
+                print('Test finish by ^C')
+            finally:
+                os.remove('{}/test.img'.format(self.mount))
         return 'Test finish.'
 
 
