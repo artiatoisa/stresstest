@@ -180,7 +180,7 @@ class WriteTestHDD(AbstractTest):
 
     def run_test(self, timeout):
         if self.free_space < self.bs * self.count:
-            raise TestError('Not enough free space on {}'.format(self.mount))
+            raise TestError('Not enough free space on {}. Required {} bytes'.format(self.mount, self.bs * self.count))
         if os.path.exists('{}/test.img'.format(self.mount)):
             raise TestError('File {} exist.'.format(self.mount))
         cmd_list = ['dd', 'if=/dev/zero', 'of={}/test.img'.format(self.mount),
