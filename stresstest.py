@@ -171,6 +171,8 @@ class WriteTestHDD(AbstractTest):
         return stats.f_frsize * stats.f_bavail / 1024 / 1024
 
     def _size_to_bytes(self, size):
+        if size is None:
+            return None
         measurement = re.sub('\d', '', size).upper()
         amount = int(re.sub('\D', '', size))
         MMB = {'G': 'GB', 'M': 'MB', 'K': 'KB'}
@@ -227,5 +229,5 @@ def _main():
         test.run_test()
 
 
-if __name__ == '__main__':
-    _main()
+# if __name__ == '__main__':
+#     _main()
