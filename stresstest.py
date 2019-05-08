@@ -188,7 +188,7 @@ class WriteTestHDD(AbstractTest):
         time_finish = time() + timeout
         while time_finish > time():
             try:
-                a = subprocess.Popen(cmd_list, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                a = subprocess.Popen(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = a.communicate()
                 print(out)
             except KeyboardInterrupt:
