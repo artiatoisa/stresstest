@@ -201,7 +201,7 @@ class WriteTestHDD(AbstractTest):
 class StressTest(object):
 
     def __init__(self, test_time, test_type=None):
-        self.test_time = test_time
+        self.test_time = test_time * 60
         self.test_type = test_type
         if self.test_type is None:
             raise TestTypeError('You have to set test type.')
@@ -213,7 +213,7 @@ class StressTest(object):
 def _main():
     parser = argparse.ArgumentParser(description='Script for simulate system load.')
     parser.add_argument('--type', choices=('memory', 'cpu', 'hdd'), required=True, help='Type of generate load.')
-    parser.add_argument('--time', type=int, required=True, help='How long load.')
+    parser.add_argument('--time', type=int, required=True, help='How long in minute load.')
     parser.add_argument('--cpu-count', type=int, help='How much core to use. By default is all.')
     parser.add_argument('--cpu-util', type=int, help='How much load to generate. By default is 100%')
     parser.add_argument('--mem-size', type=str, help='Size of memory to load.')
