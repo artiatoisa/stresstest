@@ -168,7 +168,7 @@ class WriteTestHDD(AbstractTest):
 
     def _get_free_space(self):
         stats = os.statvfs(self.mount)
-        return stats.f_frsize * stats.f_bavail / 1024 / 1024
+        return stats.f_frsize * stats.f_bavail
 
     def _size_to_bytes(self, size):
         if size is None:
