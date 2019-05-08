@@ -188,11 +188,11 @@ class WriteTestHDD(AbstractTest):
         time_finish = time() + timeout
         while time_finish > time():
             try:
-                a = subprocess.Popen(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err = a.communicate()
-                print(out)
+                a = subprocess.Popen(cmd_list, stdout=subprocess.PIPE)
+                out = a.communicate()
             except KeyboardInterrupt:
                 print('Test finish by ^C')
+                break
             finally:
                 os.remove('{}/test.img'.format(self.mount))
         return 'Test finish.'
