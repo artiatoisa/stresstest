@@ -184,7 +184,7 @@ class WriteTestHDD(AbstractTest):
         if os.path.exists('{}/test.img'.format(self.mount)):
             raise TestError('File {} exist.'.format(self.mount))
         cmd_list = ['dd', 'if=/dev/zero', 'of={}/test.img'.format(self.mount),
-                    'bs={}'.format(self.bs), 'count={}'.format(self.count), 'oflag = direct', 'conv=fdatasync']
+                    'bs={}'.format(self.bs), 'count={}'.format(self.count), 'oflag=direct', 'conv=fdatasync']
         time_finish = time() + timeout
         while time_finish > time():
             a = subprocess.Popen(cmd_list)
